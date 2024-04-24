@@ -1,0 +1,2 @@
+-remove spurious symbol attributes
+-watch downloads folder 
