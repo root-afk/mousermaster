@@ -9,26 +9,30 @@ import (
 	"path/filepath"
 )
 
-func check(e error) {
+func dieIf(e error) {
 	if e != nil {
 		log.Fatal(e)
 	}
 }
 
-// if we get an argument, change working directory there. Panic if fail.
-// Then, list all directory members.
+/*
+if we get an argument, change working directory to there or die.
+
+then, rummage through any .zip archives, looking for kicad_sym or kicad_mod
+if they're found, make a new directory named after the .zip (remove LIB_ prefix if present)
+*/
 func main() {
 	suppliedArguments := os.Args[1:] //first element in args is the program
 
 	if len(suppliedArguments) > 0 {
 		err := os.Chdir(suppliedArguments[0])
-		check(err)
+		dieIf(err)
 	}
 
 	workingDir, err := os.Getwd()
-	check(err)
+	dieIf(err)
 	dirSlice, err := os.ReadDir(workingDir)
-	check(err)
+	dieIf(err)
 	fmt.Println("working in", workingDir)
 
 	var zipFilenames []string
@@ -46,7 +50,7 @@ func main() {
 		fmt.Println(archiveFilename)
 
 		archiveContents, err = zip.OpenReader(archiveFilename)
-		check(err)
+		dieIf(err)
 
 		for _, potentialFileOfInterest := range archiveContents.File {
 			var partDirName string
@@ -65,11 +69,11 @@ func main() {
 				}
 
 				ioReadCloser, err := potentialFileOfInterest.Open()
-				check(err)
+				dieIf(err)
 				fileBytes, err := io.ReadAll(ioReadCloser)
-				check(err)
+				dieIf(err)
 				err = os.WriteFile(filepath.Join(partDirName, filepath.Base(potentialFileOfInterest.Name)), fileBytes, 0655)
-				check(err)
+				dieIf(err)
 				defer ioReadCloser.Close()
 			}
 		}
